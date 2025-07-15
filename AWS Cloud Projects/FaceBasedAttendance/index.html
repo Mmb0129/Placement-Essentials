@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Face Attendance Upload</title>
+</head>
+<body>
+<h2>Employee Face Attendance</h2>
+<video id="video" width="320" height="240" autoplay></video>
+<br>
+<button id="snap">Capture & Upload</button>
+<canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+<p id="result"></p>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const result = document.getElementById('result');
+const snap = document.getElementById('snap');
+const context = canvas.getContext('2d');
+
+// Start webcam
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => video.srcObject = stream)
+  .catch(err => console.error("Webcam error:", err));
+
+snap.addEventListener("click", async () => {
+  context.drawImage(video, 0, 0, 320, 240);
+  const dataURL = canvas.toDataURL("image/jpeg");
+  const blob = await (await fetch(dataURL)).blob();
+
+  result.innerText = "📸 Uploading...";
+
+  // 1. Get pre-signed URL from your API Gateway
+  const presignedResp = await fetch("https://oapuutgkyf.execute-api.ap-south-1.amazonaws.com/getUploadUrl");
+  const { uploadUrl, fileName } = await presignedResp.json();
+
+  // 2. Upload to S3
+  const uploadResp = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": "image/jpeg" },
+    body: blob
+  });
+
+  if (uploadResp.ok) {
+    result.innerText = `✅ Uploaded as ${fileName}. Attendance will be marked`;
+  } else {
+    result.innerText = `❌ Upload failed.`;
+  }
+});
+</script>
+</body>
+</html>
