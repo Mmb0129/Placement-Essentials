@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { withAuthenticator } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
 import "./App.css";
 
-function App() {
+function App({ signOut, user }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -76,10 +78,26 @@ function App() {
       textAlign: "center",
       padding: "20px"
     }}>
+      <div style={{ position: "absolute", top: "20px", right: "20px" }}>
+        <span style={{ marginRight: "15px" }}>👋 {user.attributes.email}</span>
+        <button
+          onClick={signOut}
+          style={{
+            backgroundColor: "#ef4444",
+            color: "#fff",
+            padding: "8px 15px",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer"
+          }}>
+          Sign Out
+        </button>
+      </div>
+
       {!ready ? (
         <>
           <h1 style={{ fontSize: "2.5rem", marginBottom: "30px" }}>
-            👋 Welcome Employee
+            👋 Welcome {user.attributes.email}
           </h1>
           <p style={{ fontSize: "1.2rem", marginBottom: "40px" }}>
             Ready to mark your attendance?
@@ -147,4 +165,7 @@ function App() {
   );
 }
 
-export default App;
+export default withAuthenticator(App, {
+  signUpAttributes: [], // disables asking extra fields
+  hideSignUp: true      // 🔥 hides the "Create Account" tab
+});
